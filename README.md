@@ -11,14 +11,14 @@ Managing kubeconfig files can become tedious when you have multiple clusters and
 
 ### Prerequisites
 
-* Your are suing bash.
+* Your are using bash.
 
 ### Install
 
 ```sh
 wget -O ~/.ktx https://raw.githubusercontent.com/gms1/ktx/refs/heads/master/ktx
 
-# Add this to your "${HOME}/".bash_profile (or similar)
+# Add this to your ~/.bash_profile (or similar)
 source "${HOME}"/.ktx
 
 # Reload your shell
