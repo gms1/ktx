@@ -20,7 +20,7 @@
 # ktx-list: list all configs
 #----------------------------------------------------------------------
 ktx-list() {
-  find "${HOME}/.kube/" -maxdepth 1 -type f -exec basename {} \;
+  find "${HOME}/.kube/" -maxdepth 1 -type f -and \( -not -name ".*" \) -exec basename {} \;
 }
 
 ###############################################################################################
