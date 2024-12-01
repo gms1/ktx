@@ -35,7 +35,7 @@ gms@sirius:~$ ktx <tab><tab>
 alpha    beta     delta    epsilon  gamma    NONE
 gms@sirius:~$ ktx-config <tab><tab>
 alpha    beta     delta    epsilon  gamma    NONE
-gms@sirius:~$ ktx-print-configs
+gms@sirius:~$ ktx
   beta
   gamma
   alpha
@@ -55,7 +55,7 @@ gms@sirius:~$ echo $KUBECONFIG
 /home/gms/.kube/gamma
 gms@sirius:~$ ktx-config
 gamma
-gms@sirius:~$ ktx-print-configs
+gms@sirius:~$ ktx
 * gamma
   beta (default)
   alpha
@@ -68,7 +68,7 @@ gms@sirius:~$ echo $KUBECONFIG
 
 gms@sirius:~$ ktx-config
 beta
-gms@sirius:~$ ktx-print-configs
+gms@sirius:~$ ktx
 * beta (default)
   gamma
   alpha
