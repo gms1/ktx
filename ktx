@@ -158,18 +158,73 @@ ktx() {
   fi
 }
 
+#**********************************************************************
+# kns-list: list all namespaces in current-context
+#----------------------------------------------------------------------
+kns-list() {
+  kubectl get namespace -o jsonpath='{$.items[*].metadata.name}'
+}
+
+###############################################################################################
+# kns: change default namespace for current kubectl config
+#   or list available namespaces if no argument is given
+#----------------------------------------------------------------------
+
+kns() {
+  local ns="${1}"
+  local current
+  local current_exist=0
+  local ctx
+
+
+  if [ -z "${ns}" ]; then
+    ctx=$(kubectl config current-context)
+    if [ -z "${ctx}" ]; then
+      echo "ERROR: No current context" 1>&2
+      return 1
+    fi
+    current=$(kubectl config view -o=jsonpath="{.contexts[?(@.name==\"${ctx}\")].context.namespace}")
+    current_exist=0
+    for ns in $(kns-list); do
+      if [ "${current}" = "${ns}" ]; then
+        echo "* ${current}"
+        current_exist=1
+      else
+        echo "  ${ns}"
+      fi
+    done
+    if [ "${current_exist}" -eq 0 ]; then
+      echo "* ${current}: NOT FOUND"
+    fi
+    return 0
+  fi
+  kubectl config set-context --current --namespace="${ns}" >/dev/null
+}
+
 ###############################################################################################
 # exports
 
 export -f ktx
 export -f ktx-config
+export -f kns
 
 ###############################################################################################
 # completion
 
 _ktx() {
-       local cur=${COMP_WORDS[COMP_CWORD]}
-       COMPREPLY=( $(compgen -W "$(ktx-list) NONE" -- $cur) )
+  [ "${COMP_CWORD}" -eq 1 ] || return
+  if [ -n "${KUBECONFIG}" ]; then
+    COMPREPLY=( $(compgen -W "$(ktx-list) NONE" -- "${COMP_WORDS[1]}") )
+  else
+    COMPREPLY=( $(compgen -W "$(ktx-list)" -- "${COMP_WORDS[1]}") )
+  fi
 }
 complete -F _ktx ktx
 complete -F _ktx ktx-config
+
+_kns() {
+  [ "${COMP_CWORD}" -eq 1 ] || return
+  COMPREPLY=( $(compgen -W "$(kns-list)" -- "${COMP_WORDS[1]}") )
+}
+
+complete -F _kns kns

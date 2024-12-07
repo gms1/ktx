@@ -2,10 +2,11 @@
 
 ## Overview
 
-Managing kubeconfig files can become tedious when you have multiple clusters and contexts to switch between. `ktx` aims to reduce friction caused by switching between various configurations.
+Managing kubeconfig files can become tedious when you have to use multiple and frequently changing clusters. `ktx` aims to reduce friction caused by switching between various configurations.
 
 `ktx` takes the approach of modifying the `KUBECONFIG` environment variable to select the desired config.
 `ktx-config` can be used to configure a default, by managing a symbolic link ~/.kube/config which points to the desired config.
+`kns` can be used to configure the default namespace for the current context
 
 ## Getting Started
 
@@ -74,6 +75,22 @@ gms@sirius:~$ ktx
   alpha
   epsilon
   delta
+```
+
+using `kns`:
+
+```bash
+gms@sirius:~$ kns
+* default
+  kube-node-lease
+  kube-public
+  kube-system
+gms@sirius:~$ kns kube-system
+gms@sirius:~$ kns
+  default
+  kube-node-lease
+  kube-public
+* kube-system
 ```
 
 # Pronunciation Guide
