@@ -204,8 +204,11 @@ kns() {
 ###############################################################################################
 # exports
 
-export -f ktx
+export -f ktx-list
+export -f ktx-print-configs
 export -f ktx-config
+export -f ktx
+export -f kns-list
 export -f kns
 
 ###############################################################################################
