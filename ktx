@@ -17,10 +17,46 @@
 #
 
 #**********************************************************************
-# ktx-list: list all configs
+# ktx-list: list all configs in ~/.kube
 #----------------------------------------------------------------------
 ktx-list() {
-  find "${HOME}/.kube/" -maxdepth 1 -type f -and \( -not -name ".*" \) -exec basename {} \;
+  find "${HOME}/.kube/" -maxdepth 1 -type f -and \( -not -name ".*" \) -exec basename {} \; 2>/dev/null
+}
+
+###############################################################################################
+# ktx-print-configs: print all configs in ~/.kube
+#----------------------------------------------------------------------
+
+ktx-print-configs() {
+  local active="$(ktx-config)"
+  local default="$(KUBECONFIG='' ktx-config)"
+  local configs=( $(ktx-list) )
+  local config
+
+  if [ -n "${active}" ]; then
+    echo -n "* ${active}"
+    if [ "${active}" = "${default}" ]; then
+      echo " (default)"
+    else
+      echo
+    fi
+  fi
+
+  if [ "${#configs[@]}" -eq 0 ]; then
+    echo "ERROR: No configs present in ${HOME}/.kube." 1>&2
+    return 1
+  fi
+
+  for config in "${configs[@]}"; do
+    [ "${config}" != "${active}" ] || continue
+    echo -n "  ${config}"
+    if [ "${config}" = "${default}" ]; then
+      echo " (default)"
+    else
+      echo
+    fi
+  done
+  return 0
 }
 
 ###############################################################################################
@@ -29,16 +65,18 @@ ktx-list() {
 #----------------------------------------------------------------------
 ktx-config() {
   local config="${1}"
+
   if [ ! -d "${HOME}/.kube" ]; then
     mkdir -p "${HOME}/.kube"
     chmod go-rwx "${HOME}/.kube"
   fi
+
   if [ -z "${config}" -o "${config,,}" = "none" ]; then
     if [ -n "${KUBECONFIG}" ]; then
       config=$(echo "${KUBECONFIG}"  | cut -d ':' -f 1)
       if [ -f "${config}" ]; then
         config=$(realpath "${config}")
-        if [ $(dirname -- "${config}") = ${HOME}/.kube ]; then
+        if [ $(dirname -- "${config}") = $(realpath "${HOME}/.kube") ]; then
           basename -- "${config}"
         else
           echo "${config}"
@@ -51,7 +89,11 @@ ktx-config() {
     else
       if [ -f "${HOME}/.kube/config" ]; then
         config=$(realpath "${HOME}/.kube/config")
-        basename -- "${config}"
+        if [ $(dirname -- "${config}") = $(realpath "${HOME}/.kube") ]; then
+          basename -- "${config}"
+        else
+          echo "${config}"
+        fi
         return 0
       fi
       if [ -h "${HOME}/.kube/config" ]; then
@@ -86,74 +128,29 @@ ktx-config() {
 }
 
 ###############################################################################################
-# ktx-print-configs: list all configs in ~/.kube
-#----------------------------------------------------------------------
-
-ktx-print-configs() {
-  local active="$(ktx-config)"
-  local default="$(KUBECONFIG='' ktx-config)"
-  if [ -n "${active}" ]; then
-    echo -n "* ${active}"
-    if [ "${active}" = "${default}" ]; then
-      echo " (default)"
-    else
-      echo
-    fi
-  fi
-  while read config; do
-    [ "${config}" != "${active}" ] || continue
-    echo -n "  ${config}"
-    if [ "${config}" = "${default}" ]; then
-      echo " (default)"
-    else
-      echo
-    fi
-  done <<EOT
-$(ktx-list)
-EOT
-
-}
-
-
-###############################################################################################
 # ktx: change kubectl config via KUBECONFIG variable to the given argument
 #   or list available configs if no argument is given
 #----------------------------------------------------------------------
 
 ktx() {
   local config="${1}"
-  local configs
 
-  # Test that we have a $HOME/.kube to work with
-  if [ ! -d "${HOME}/.kube" ]; then
-      echo "ERROR: The following directory does not exist: ${HOME}/.kube." 1>&2
-      return 1
-  fi
-
-  configs=( $(ktx-list) )
-  if [ "${#configs[@]}" -eq 0 ]; then
-      echo "ERROR: No configs present in ${HOME}/.kube." 1>&2
-      return 1
-  fi
-
-  # If no argument was given then list configs
   if [ -z "${config}" ]; then
     ktx-print-configs
     return $?
   fi
 
-  # If argument is "none" or "config" then unset the KUBECONFIG variable
-  if [ "${1,,}" = "none" -o "${config}" = "config" ]; then
+  if [ "${config,,}" = "none" -o "${config}" = "config" ]; then
       unset KUBECONFIG
       ktx-config
       return $?
   fi
 
-  # Verify config exists
-  if [ -e "${HOME}/.kube/${1}" ]; then
-      export KUBECONFIG="${HOME}/.kube/${1}"
+  if [ -f "${HOME}/.kube/${config}" ]; then
+      export KUBECONFIG="${HOME}/.kube/${config}"
+      return 0
   else
-      echo "ERROR: The file '${HOME}/.kube/${1}' does not exist" 1>&2
+      echo "ERROR: The file '${HOME}/.kube/${config}' does not exist" 1>&2
       return 1
   fi
 }
